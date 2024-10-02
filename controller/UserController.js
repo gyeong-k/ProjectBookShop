@@ -1,14 +1,24 @@
 const conn = require("../mariadb"); //현재폴더의 상위 폴더
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken"); //jwt 모듈
+const crypto = require("crypto"); // crypto 모듈 : 암호화
 const dotenv = require("dotenv"); //dotenv 모듈
 dotenv.config();
 
 const join = (req, res) => {
   const { email, password } = req.body;
+  let sql = "INSERT INTO users (email, password, salt) VALUES (?,?,?)";
 
-  let sql = "INSERT INTO users (email, password) VALUES (?,?)";
-  let values = [email, password];
+  //비밀번호 암호화
+  //회원가입 시 비번 암호화해서 암호화된 비번과 솔트 값을 같이 DBd에 저장
+  const salt = crypto.randomBytes(10).toString("base64");
+  const hashPassword = crypto
+    .pbkdf2Sync(password, salt, 10000, 10, "sha512")
+    .toString("base64");
+
+  //로그인 시 이메일과 비번(날것) => 솔트값 꺼내서 비번 암호화 해보고 => 디비 비번이랑 비교
+
+  let values = [email, hashPassword, salt];
 
   conn.query(sql, values, (err, results) => {
     if (err) {
