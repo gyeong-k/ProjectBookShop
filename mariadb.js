@@ -7,7 +7,7 @@ const connection = mariadb.createConnection({
   user: "root",
   password: "root",
   database: "book_shop", //내가 만든 스키마
-  dateString: true,
+  dateStrings: true,
 });
 
 module.exports = connection;
