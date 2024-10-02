@@ -16,8 +16,6 @@ const join = (req, res) => {
     .pbkdf2Sync(password, salt, 10000, 10, "sha512")
     .toString("base64");
 
-  //로그인 시 이메일과 비번(날것) => 솔트값 꺼내서 비번 암호화 해보고 => 디비 비번이랑 비교
-
   let values = [email, hashPassword, salt];
 
   conn.query(sql, values, (err, results) => {
@@ -41,7 +39,13 @@ const login = (req, res) => {
     console.log("로그인 results : ", results);
     const loginUser = results[0];
 
-    if (loginUser && loginUser.password == password) {
+    //로그인 시 이메일과 비번(날것) => 솔트값 꺼내서 비번 암호화 해보고
+    const hashPassword = crypto
+      .pbkdf2Sync(password, loginUser.salt, 10000, 10, "sha512")
+      .toString("base64");
+
+    //=> 디비 비번이랑 비교
+    if (loginUser && loginUser.password == hashPassword) {
       //토큰 발생
       const token = jwt.sign(
         {
@@ -88,14 +92,22 @@ const passwordResetRequest = (req, res) => {
 
 const passwordReset = (req, res) => {
   const { email, password } = req.body;
-  let sql = "UPDATE users SET password=? WHERE email=?";
-  let values = [password, email];
+
+  let sql = "UPDATE users SET password=?, salt=? WHERE email=?";
+  //회원가입 시 비번 암호화해서 암호화된 비번과 솔트 값을 같이 DBd에 저장
+  const salt = crypto.randomBytes(10).toString("base64");
+  const hashPassword = crypto
+    .pbkdf2Sync(password, salt, 10000, 10, "sha512")
+    .toString("base64");
+
+  let values = [hashPassword, salt, email];
 
   conn.query(sql, values, (err, results) => {
     if (err) {
       console.log(err);
       return res.status(StatusCodes.BAD_REQUEST).end(); //bad request
     }
+
     if (results.affectedRows == 0)
       return res.status(StatusCodes.BAD_REQUEST).end();
     else return res.status(StatusCodes.OK).json(results);
