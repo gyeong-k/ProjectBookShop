@@ -1,18 +1,12 @@
 const express = require("express");
 const router = express.Router();
+//const conn = require("../mariadb"); //현재폴더의 상위 폴더
+const { allBooks, bookDetail } = require("../controller/BookController");
 
 router.use(express.json());
 
-router.post("/", (req, res) => {
-  res.status(201).send("전체 도서 조회");
-});
-
-router.post("/:id", (req, res) => {
-  res.status(201).send("개별 도서 조회");
-});
-
-router.post("/", (req, res) => {
-  res.status(201).send("카테고리별 도서 목록 조회");
-});
+//router.get("/", booksByCategory);
+router.get("/", allBooks); //(카테고리별) 전체 조회
+router.get("/:id", bookDetail);
 
 module.exports = router;
