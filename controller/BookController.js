@@ -2,22 +2,23 @@ const conn = require("../mariadb"); //현재폴더의 상위 폴더
 const { StatusCodes } = require("http-status-codes");
 
 const allBooks = (req, res) => {
-  let { category_id, news } = req.query;
+  let { category_id, news, limit, currentPage } = req.query;
 
-  let sql = "SELECT * FROM books";
-  let values = [];
+  let offset = limit * (currentPage - 1);
+  let sql = "SELECT * FROM books LIMIT ? OFFSET ?";
+  let values = [parseInt(limit), offset];
 
   if (category_id && news) {
     sql +=
       " WHERE category_id=? AND pub_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()";
-    values = [category_id, news];
+    values = values.push(category_id, news);
   } else if (category_id) {
     sql += " WHERE category_id=?";
-    values = [category_id];
+    values = values.push(category_id);
   } else if (news) {
     sql +=
       " WHERE pub_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()";
-    values = [news];
+    values = alues.push(news);
   }
   conn.query(sql, values, (err, results) => {
     if (err) {
@@ -32,7 +33,7 @@ const allBooks = (req, res) => {
 const bookDetail = (req, res) => {
   let { id } = req.params;
   let sql =
-    "SELECT * FROM books LEFT JOIN category ON books.category_id = category.id WHERE books.id = ?;";
+    "SELECT * FROM books LEFT JOIN category ON books.category_id = category.id WHERE books.id = ?";
   conn.query(sql, id, (err, results) => {
     if (err) {
       console.log(err);
